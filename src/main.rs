@@ -1,6 +1,5 @@
 use std::convert::TryInto;
 use std::io::{self, Read, Write, BufRead, BufReader};
-use std::os::unix::net::UnixStream;
 use std::fs::OpenOptions;
 use std::path::Path;
 use std::str;
@@ -11,6 +10,11 @@ use byteorder::{ByteOrder, NativeEndian};
 use serde_json::Value;
 use serde::{Serialize, Deserialize};
 
+#[cfg(target_family = "unix")]
+use std::os::unix::net::UnixStream;
+#[cfg(target_family = "windows")]
+use windows_named_pipe::PipeStream;
+
 const DELIMITER:[u8; 1] = [12]; // node-ipc "\f"
 
 fn get_socket_path() -> String {
@@ -19,7 +23,13 @@ fn get_socket_path() -> String {
     // Cargo.toml name
     let filename = exe_path.file_name().unwrap();
     // node-ipc unix socket path
-    format!("/tmp/app.{}", filename.to_str().unwrap())
+    let path = format!("/tmp/app.{}", filename.to_str().unwrap());
+
+    if cfg!(target_family = "unix") {
+        path
+    } else {
+        format!("\\\\.\\pipe\\{}", path)
+    }
 }
 
 fn _log(buf: &[u8]) {
@@ -36,8 +46,13 @@ struct JsMessage<'a> {
     data: Value,
 }
 
+#[cfg(target_family = "unix")]
 struct NativeApp {
     socket: UnixStream
+}
+#[cfg(target_family = "windows")]
+struct NativeApp {
+    socket: PipeStream
 }
 
 impl NativeApp {
@@ -91,6 +106,7 @@ fn read_native_message(app: &mut NativeApp) {
     }
 }
 
+#[cfg(target_family = "unix")]
 fn main() {
     let socket = UnixStream::connect(get_socket_path()).unwrap();
     let socket2 = socket.try_clone().expect("Couldn't clone socket");
@@ -103,4 +119,13 @@ fn main() {
     let thr2 = thread::spawn(move || read_native_message(&mut app2));
     thr1.join().expect("read stdin thread failed");
     thr2.join().expect("read socket thread failed");
+}
+
+#[cfg(target_family = "windows")]
+fn main() {
+    // PipeStream 不支持 try_clone
+    // 所以只能读取 stdin -> socket 不能 socket -> stdout
+    let socket = PipeStream::connect(get_socket_path()).unwrap();
+    let mut app = NativeApp { socket };
+    read_stdin(&mut app);
 }
