@@ -1,0 +1,29 @@
+name: Handle Release
+
+on: release
+
+jobs:
+  generate:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macOS-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@master
+      - name: Generate artifacts
+        run: cargo build --release
+      - name: Rename artifacts
+        run: |
+          cp target/release/bridge target/release/bridge-${{ matrix.os }}
+        shell: bash
+      - name: Upload artifacts
+        uses: skx/github-action-publish-binaries@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        with:
+          args: 'target/release/bridge-*'
