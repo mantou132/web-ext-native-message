@@ -21,14 +21,13 @@ fn get_socket_path() -> String {
     let exe_path = env::current_exe().unwrap();
     let exe_path = Path::new(&exe_path);
     // Cargo.toml name
-    let filename = exe_path.file_name().unwrap();
-    // node-ipc unix socket path
-    let path = format!("/tmp/app.{}", filename.to_str().unwrap());
+    let filename = exe_path.file_stem().unwrap();
+    let filename = filename.to_str().unwrap();
 
     if cfg!(target_family = "unix") {
-        path
+        format!("/tmp/app.{}", filename)
     } else {
-        format!("\\\\.\\pipe\\{}", path)
+        format!("\\\\.\\pipe\\tmp-app.{}", filename)
     }
 }
 
@@ -106,14 +105,19 @@ fn read_native_message(app: &mut NativeApp) {
     }
 }
 
+fn notify() {
+    let msg: JsMessage = JsMessage { r#type: "connected", data: Value::String(String::new()) };
+    write_stdout(serde_json::to_string(&msg).unwrap().as_bytes());
+}
+
 #[cfg(target_family = "unix")]
 fn main() {
     let socket = UnixStream::connect(get_socket_path()).unwrap();
     let socket2 = socket.try_clone().expect("Couldn't clone socket");
     let mut app = NativeApp { socket };
     let mut app2 = NativeApp { socket: socket2 };
-    let msg: JsMessage = JsMessage { r#type: "connected", data: Value::String(String::new()) };
-    write_stdout(serde_json::to_string(&msg).unwrap().as_bytes());
+
+    notify();
 
     let thr1 = thread::spawn(move || read_stdin(&mut app));
     let thr2 = thread::spawn(move || read_native_message(&mut app2));
@@ -125,7 +129,10 @@ fn main() {
 fn main() {
     // PipeStream 不支持 try_clone
     // 所以只能读取 stdin -> socket 不能 socket -> stdout
-    let socket = PipeStream::connect(get_socket_path()).unwrap();
+    let socket = PipeStream::connect(get_socket_path()).expect("Couldn't connect socket");
     let mut app = NativeApp { socket };
+    
+    notify();
+
     read_stdin(&mut app);
 }

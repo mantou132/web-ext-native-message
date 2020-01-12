@@ -15,10 +15,18 @@ cp target/release/google-translate-bridge bridge
 # 应用启动时会自动连接 path 为 `/tmp/app.<filename>` 的 unix socket
 ```
 
+### 开发
+```powershell
+# 启动测试 socket，打印了 `node-ipc` 的 socket 的一些信息
+node test
+# 编译并运行
+cargo run
+```
+
 ### node-ipc 通信规范
 
 - [平台](https://nodejs.org/api/net.html#net_ipc_support): UNIX domain / named pipe
-- 名称: `\\.\pipe\${options.path}` / `/tmp/app.${id}`
+- 名称: `\\.\pipe\tmp-app.${id}` / `/tmp/app.${id}`
 - 消息格式: [js-message](https://www.npmjs.com/package/js-message)
   - 序列化消息 + 分割符(默认换页符)
   - type

@@ -25,7 +25,7 @@ ipc.connectTo('bridge', () => {
   ipc.of.bridge.on('disconnect', () => {
     ipc.log('disconnected from world');
   });
-  ipc.of.bridge.on('app.message', (data) => {
+  ipc.of.bridge.on('app.message', data => {
     ipc.log('got a message from world : ', data);
   });
 });
