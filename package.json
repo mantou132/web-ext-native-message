@@ -1,6 +1,6 @@
 {
   "name": "web-ext-native-message",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "浏览器扩展进程 <-- 标准输入/输出 --> wenm <-- Socket 进程间通信 --> 本机 App",
   "main": "test.js",
   "scripts": {
