@@ -10,17 +10,18 @@
 ```bash
 # 编译
 cargo build --release
-# 复制并重命名
-cp target/release/google-translate-bridge bridge
 # 应用启动时会自动连接 path 为 `/tmp/app.<filename>` 的 unix socket
+# 想要自定义 path，只需要重命名二进制文件
 ```
 
 ### 开发
+
 ```powershell
-# 启动测试 socket，打印了 `node-ipc` 的 socket 的一些信息
-node test
 # 编译并运行
 cargo run
+# 启动测试 socket，打印了 `node-ipc` 的 socket 的一些信息
+npm i
+node ./
 ```
 
 ### node-ipc 通信规范
@@ -30,14 +31,10 @@ cargo run
 - 消息格式: [js-message](https://www.npmjs.com/package/js-message)
   - 序列化消息 + 分割符(默认换页符)
   - type
-  - data
+  - data // 支持 json
 
 ### web-ext 通信规范
 
 前面 4 个字节存长度，后面写 `utf-8` 编码的字符串内容。
 
 注意：webextension 会自动序列化
-
-### TODO
-
-- 支持 windows pipe name

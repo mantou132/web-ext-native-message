@@ -1,0 +1,23 @@
+{
+  "name": "web-ext-native-message",
+  "version": "0.0.1",
+  "description": "浏览器扩展进程 <-- 标准输入/输出 --> wenm <-- Socket 进程间通信 --> 本机 App",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mantou132/web-ext-native-message.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mantou132/web-ext-native-message/issues"
+  },
+  "homepage": "https://github.com/mantou132/web-ext-native-message#readme",
+  "dependencies": {
+    "@types/node-ipc": "^9.1.3",
+    "node-ipc": "^9.1.1"
+  }
+}
