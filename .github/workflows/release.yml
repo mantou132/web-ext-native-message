@@ -1,36 +1,37 @@
-name: Handle Release
+name: Publish
 
-on: release
+on:
+  release:
+    types:
+      - published
 
 jobs:
-  generate:
-
-    runs-on: ubuntu-latest
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
       matrix:
-        target:
-          - x86_64-pc-windows-gnu
-          - x86_64-apple-darwin
-          - x86_64-unknown-linux-gnu
+        include:
+          - os: ubuntu-latest
+            artifact_name: bridge
+            asset_name: bridge-linux
+          - os: windows-latest
+            artifact_name: bridge.exe
+            asset_name: bridge-windows.exe
+          - os: macos-latest
+            artifact_name: bridge
+            asset_name: bridge-macos
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          toolchain: nightly
-          target: ${{ matrix.target }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target=${{ matrix.target }}
-      - name: Rename artifacts
-        run: cp target/${{ matrix.target }}/release/bridge target/${{ matrix.target }}/release/bridge-${{ matrix.target }} || true
-      - uses: skx/github-action-publish-binaries@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        with:
-          args: 'target/${{ matrix.target }}/release/bridge*'
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
+          overwrite: true
